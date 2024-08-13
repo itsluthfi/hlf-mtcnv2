@@ -10,7 +10,7 @@
 ./install-fabric.sh docker binary
 ```
 
-3. Setelah selesai, pindah ke direktori `mtcn-chaincode-go` & `mtcn-rest-api-go` dan install dependency-nya
+3. Setelah selesai, pindah ke direktori `chaincode-go` & `rest-api-go` dan install dependency-nya
 
 4. Balik ke root folder, pindah ke direktori ke `test-network` dan ketik command
 
@@ -18,7 +18,7 @@
 ./startNetwork.sh
 ```
 
-5. Setelah selesai, pindah lagi ke direktori `mtcn-rest-api-go` dan ketik command untuk start REST server
+5. Setelah selesai, pindah lagi ke direktori `rest-api-go` dan ketik command untuk start REST server
 
 ```
 go run main.go
@@ -32,7 +32,7 @@ atau
 http://localhost:3000/query
 ```
 
-7. Untuk terminate server, bisa `Ctrl+C` di terminal di direktori `mtcn-rest-api-go`
+7. Untuk terminate server, bisa `Ctrl+C` di terminal di direktori `rest-api-go`
 
 8. Untuk stop jaringan HLF, pindah ke direktori `test-network` dan ketik command `./network.sh down`
 
