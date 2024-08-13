@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/itsluthfi/hlf-mtcnv2/mtcn-rest-api-go/web"
+	"github.com/itsluthfi/hlf-mtcnv2/rest-api-go/web"
 )
 
 func main() {

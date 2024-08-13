@@ -1,4 +1,4 @@
-module github.com/itsluthfi/hlf-mtcnv2/mtcn-rest-api-go
+module github.com/itsluthfi/hlf-mtcnv2/rest-api-go
 
 go 1.22.5
 

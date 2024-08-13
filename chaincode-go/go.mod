@@ -1,4 +1,4 @@
-module github.com/itsluthfi/hlf-mtcnv2/mtcn-chaincode-go
+module github.com/itsluthfi/hlf-mtcnv2/chaincode-go
 
 go 1.22.5
 
