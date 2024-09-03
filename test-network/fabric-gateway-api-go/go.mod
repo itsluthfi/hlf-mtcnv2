@@ -1,6 +1,6 @@
-module erc20api
+module github.com/itsluthfi/hlf-mtcnv2/test-network/fabric-gateway-api-go
 
-go 1.19
+go 1.22.5
 
 require (
 	github.com/hyperledger/fabric-gateway v1.1.1

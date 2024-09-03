@@ -475,7 +475,7 @@ func newSign() identity.Sign {
 func initialize(contract *client.Contract) {
 	fmt.Printf("Submit Transaction: Initialize, function creates the initial set of varriables on the ledger \n")
 
-	_, err := contract.SubmitTransaction("Initialize", "energycoin", "ec", "2")
+	_, err := contract.SubmitTransaction("Initialize", "MeetCoin", "MTCN", "0")
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
