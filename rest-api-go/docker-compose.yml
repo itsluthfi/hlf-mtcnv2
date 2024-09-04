@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: hlfmtcn_db
+      MYSQL_USER: itsluthfi
+      MYSQL_PASSWORD: hlfmtcnv2
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - "hlfmtcnBackend:/var/lib/mysql"
+    ports:
+      - 3306:3306
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080
+      
+volumes:
+  hlfmtcnBackend:
