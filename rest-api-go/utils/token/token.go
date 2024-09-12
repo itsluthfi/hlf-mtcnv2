@@ -78,22 +78,3 @@ func ExtractTokenID(c *gin.Context) (uint, error) {
 	}
 	return 0, nil
 }
-
-func ExtractTokenNationalID(c *gin.Context) (string, error) {
-	tokenString := ExtractToken(c)
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing error: %v", token.Header["alg"])
-		}
-		return []byte(os.Getenv("API_SECRET")), nil
-	})
-	if err != nil {
-		return "", err
-	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		nationalID := fmt.Sprintf("%s", claims["national_id"])
-		return nationalID, nil
-	}
-	return "", nil
-}
