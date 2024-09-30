@@ -2,7 +2,9 @@
 
 ./network.sh down
 
-./network.sh up createChannel -s couchdb -c mychannel -ca
+# ./network.sh up createChannel -s couchdb -c mychannel -ca
+
+./network.sh up createChannel -c mychannel -ca
 
 # ./network.sh deployCC -ccn ledger -ccp ../chaincode-go/ -ccl go -ccep "OR('Org1MSP.peer','Org2MSP.peer')"
 
