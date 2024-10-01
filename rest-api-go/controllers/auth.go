@@ -26,11 +26,11 @@ func CurrentUser(c *gin.Context) {
 }
 
 type RegisterInput struct {
-	Email       string `json:"email" binding:"required"`
-	PhoneNumber string `json:"phoneNumber" binding:"required"`
-	Firstname   string `json:"firstname" binding:"required"`
-	Lastname    string `json:"lastname" binding:"required"`
-	Password    string `json:"password" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+	Username  string `json:"username" binding:"required"`
+	Firstname string `json:"firstname" binding:"required"`
+	Lastname  string `json:"lastname" binding:"required"`
+	Password  string `json:"password" binding:"required"`
 }
 
 func Register(c *gin.Context) {
@@ -41,7 +41,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	err := blockchain.Register(input.PhoneNumber, "pas123") //password is hardcoded for now ;)
+	err := blockchain.Register(input.Username, input.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -50,13 +50,13 @@ func Register(c *gin.Context) {
 	u := models.User{}
 
 	u.Email = input.Email
-	u.Username = input.PhoneNumber
+	u.Username = input.Username
 	u.Password = input.Password
 	u.Firstname = input.Firstname
 	u.Lastname = input.Lastname
 	u.IsSuper = false
 
-	accountID, err := blockchain.AccountID(input.PhoneNumber)
+	accountID, err := blockchain.AccountID(input.Username)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -75,7 +75,7 @@ func Register(c *gin.Context) {
 }
 
 type LoginInput struct {
-	Username string `json:"phoneNumber" binding:"required"`
+	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -103,6 +103,6 @@ func Login(c *gin.Context) {
 }
 
 type VerifyInput struct {
-	Username string `json:"phoneNumber" binding:"required"`
+	Username string `json:"username" binding:"required"`
 	Code     string `json:"code" binding:"required"`
 }
