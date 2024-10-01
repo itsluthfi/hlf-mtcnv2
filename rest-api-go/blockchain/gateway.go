@@ -125,6 +125,72 @@ func Mint(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
+type BurnReq struct {
+	Username          string `json:"username"`
+	BankName          string `json:"bank_name"`
+	BankAccountNumber string `json:"bank_account_number"`
+	BankAccountName   string `json:"bank_account_name"`
+	Value             int    `json:"value"`
+}
+
+func Burn(c *gin.Context) {
+	var input BurnReq
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// username string, value int
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+	url := os.Getenv("HYPERLEDGER_API") + "/burn"
+	token := os.Getenv("HYPERLEDGER_TOKEN")
+
+	var payload BurnReq
+	payload.Username = input.Username
+	payload.Value = input.Value
+
+	var buf bytes.Buffer
+	err = json.NewEncoder(&buf).Encode(payload)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	client := &http.Client{}
+	req, err := http.NewRequest(http.MethodPost, url, &buf)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", token)
+	res, err := client.Do(req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot Burn"})
+		return
+	}
+
+	currentTime := time.Now()
+	var trxLog models.Transactions
+	trxLog.Sender = input.Username
+	trxLog.Receiver = fmt.Sprintf("%s - %s", input.BankName, input.BankAccountName)
+	trxLog.Value = strconv.Itoa(input.Value)
+	trxLog.Date = fmt.Sprint(currentTime.Format("2006-01-02 15:04:05"))
+	trxLog.SaveTransaction()
+
+	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+}
+
 type BalanceInput struct {
 	Username string `json:"username"`
 }
