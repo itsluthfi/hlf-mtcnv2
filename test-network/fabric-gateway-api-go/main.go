@@ -47,6 +47,7 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/register", register)
 	http.HandleFunc("/mint", minter)
+	http.HandleFunc("/burn", burner)
 	http.HandleFunc("/balance", balancer)
 	http.HandleFunc("/transfer", transferer)
 	http.HandleFunc("/accountid", clientAccountIDer)
@@ -156,6 +157,74 @@ func minter(w http.ResponseWriter, req *http.Request) {
 	log.Printf("%s - User %s minted %d token.", now, username, value)
 
 	var payload mintResponseBody
+	payload.Message = "ok"
+	payload.Username = username
+	payload.Value = strconv.Itoa(value)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(payload)
+}
+
+type burnRequestBody struct {
+	Username string `json:"username"`
+	Value    int    `json:"value"`
+}
+
+type burnResponseBody struct {
+	Message  string `json:"message"`
+	Username string `json:"username"`
+	Value    string `json:"value"`
+}
+
+func burner(w http.ResponseWriter, req *http.Request) {
+	// Parse request's body
+	body, _ := io.ReadAll(req.Body)
+	var reqData burnRequestBody
+	err := json.Unmarshal(body, &reqData)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("500 - Could not parse the request body!"))
+		return
+	}
+	var username string = reqData.Username
+	var value int = reqData.Value
+
+	certPath = fmt.Sprintf(cryptoPath+"/users/%s@org1.example.com/msp/signcerts/cert.pem", username)
+	keyPath = fmt.Sprintf(cryptoPath+"/users/%s@org1.example.com/msp/keystore/", username)
+
+	// The gRPC client connection should be shared by all Gateway connections to this endpoint
+	clientConnection := newGrpcConnection()
+	defer clientConnection.Close()
+
+	id := newIdentity()
+	sign := newSign()
+
+	// Create a Gateway connection for a specific client identity
+	gateway, err := client.Connect(
+		id,
+		client.WithSign(sign),
+		client.WithClientConnection(clientConnection),
+		// Default timeouts for different gRPC calls
+		client.WithEvaluateTimeout(5*time.Second),
+		client.WithEndorseTimeout(15*time.Second),
+		client.WithSubmitTimeout(5*time.Second),
+		client.WithCommitStatusTimeout(1*time.Minute),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer gateway.Close()
+
+	network := gateway.GetNetwork(channelName)
+	contract := network.GetContract(chaincodeName)
+
+	var now = time.Now().Format("20060102150405")
+	log.Printf("%s - User %s Called for burn.", now, username)
+	burn(contract, value)
+	now = time.Now().Format("20060102150405")
+	log.Printf("%s - User %s burned %d token.", now, username, value)
+
+	var payload burnResponseBody
 	payload.Message = "ok"
 	payload.Username = username
 	payload.Value = strconv.Itoa(value)
@@ -485,6 +554,13 @@ func initialize(contract *client.Contract) {
 
 func mint(contract *client.Contract, value int) {
 	_, err := contract.SubmitTransaction("Mint", strconv.Itoa(value))
+	if err != nil {
+		panic(fmt.Errorf("failed to submit transaction: %w", err))
+	}
+}
+
+func burn(contract *client.Contract, value int) {
+	_, err := contract.SubmitTransaction("Burn", strconv.Itoa(value))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
