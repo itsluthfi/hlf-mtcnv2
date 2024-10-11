@@ -131,6 +131,65 @@ func (s *SmartContract) Mint(ctx contractapi.TransactionContextInterface, amount
 	return nil
 }
 
+// Mint creates new tokens and adds them to minter's account balance with composite keys
+func (s *SmartContract) MintBatch(ctx contractapi.TransactionContextInterface, amount int) error {
+
+	// Check if contract is initialized
+	initialized, err := checkInitialized(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check if contract is already initialized: %v", err)
+	}
+	if !initialized {
+		return fmt.Errorf("Contract options need to be set before calling any function, call Initialize() to initialize contract")
+	}
+
+	// Check minter authorization
+	clientMSPID, err := ctx.GetClientIdentity().GetMSPID()
+	if err != nil {
+		return fmt.Errorf("failed to get MSPID: %v", err)
+	}
+	if clientMSPID != "Org1MSP" {
+		return fmt.Errorf("client is not authorized to mint new tokens")
+	}
+
+	// Get the minter's ID
+	minter, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return fmt.Errorf("failed to get client id: %v", err)
+	}
+
+	if amount <= 0 {
+		return fmt.Errorf("mint amount must be a positive integer")
+	}
+
+	// Use composite key for each transaction to avoid state conflicts
+	mintKey, err := ctx.GetStub().CreateCompositeKey("mint", []string{minter, ctx.GetStub().GetTxID()})
+	if err != nil {
+		return fmt.Errorf("failed to create composite key: %v", err)
+	}
+
+	// Store the mint amount with the composite key
+	err = ctx.GetStub().PutState(mintKey, []byte(strconv.Itoa(amount)))
+	if err != nil {
+		return fmt.Errorf("failed to update minter's balance: %v", err)
+	}
+
+	// Emit a Transfer event
+	transferEvent := event{"0x0", minter, amount}
+	transferEventJSON, err := json.Marshal(transferEvent)
+	if err != nil {
+		return fmt.Errorf("failed to obtain JSON encoding: %v", err)
+	}
+	err = ctx.GetStub().SetEvent("Transfer", transferEventJSON)
+	if err != nil {
+		return fmt.Errorf("failed to set event: %v", err)
+	}
+
+	log.Printf("Minted %d tokens for minter %s", amount, minter)
+
+	return nil
+}
+
 // Burn redeems tokens the minter's account balance
 // This function triggers a Transfer event
 func (s *SmartContract) Burn(ctx contractapi.TransactionContextInterface, amount int) error {
@@ -719,7 +778,7 @@ func checkInitialized(ctx contractapi.TransactionContextInterface) (bool, error)
 // sub two number checking for overflow
 func sub(b int, q int) (int, error) {
 
-	// sub two number checking 
+	// sub two number checking
 	if q <= 0 {
 		return 0, fmt.Errorf("Error: the subtraction number is %d, it should be greater than 0", q)
 	}
