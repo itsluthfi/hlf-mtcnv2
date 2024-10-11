@@ -115,12 +115,12 @@ func Mint(c *gin.Context) {
 	}
 
 	currentTime := time.Now()
-	var trxLog models.Transactions
-	trxLog.Sender = "System"
-	trxLog.Receiver = input.Username
-	trxLog.Value = strconv.Itoa(input.Value)
-	trxLog.Date = fmt.Sprint(currentTime.Format("2006-01-02 15:04:05"))
-	trxLog.SaveTransaction()
+	var transactionLog models.Transactions
+	transactionLog.Sender = "System"
+	transactionLog.Receiver = input.Username
+	transactionLog.Value = strconv.Itoa(input.Value)
+	transactionLog.Date = fmt.Sprint(currentTime.Format("2006-01-02 15:04:05"))
+	transactionLog.SaveTransaction()
 
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
@@ -181,12 +181,12 @@ func Burn(c *gin.Context) {
 	}
 
 	currentTime := time.Now()
-	var trxLog models.Transactions
-	trxLog.Sender = input.Username
-	trxLog.Receiver = fmt.Sprintf("%s - %s", input.BankName, input.BankAccountName)
-	trxLog.Value = strconv.Itoa(input.Value)
-	trxLog.Date = fmt.Sprint(currentTime.Format("2006-01-02 15:04:05"))
-	trxLog.SaveTransaction()
+	var transactionLog models.Transactions
+	transactionLog.Sender = input.Username
+	transactionLog.Receiver = fmt.Sprintf("%s - %s", input.BankName, input.BankAccountName)
+	transactionLog.Value = strconv.Itoa(input.Value)
+	transactionLog.Date = fmt.Sprint(currentTime.Format("2006-01-02 15:04:05"))
+	transactionLog.SaveTransaction()
 
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }

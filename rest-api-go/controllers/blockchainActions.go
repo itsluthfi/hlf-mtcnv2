@@ -41,7 +41,7 @@ func Transfer(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	receiverWalletID, err := models.GetWalletIDByUsername(input.Receiver)
+	receiverAccountID, err := models.GetAccountIDByUsername(input.Receiver)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -62,19 +62,19 @@ func Transfer(c *gin.Context) {
 		return
 	}
 
-	err = blockchain.Transfer(username, receiverWalletID, convertedValue)
+	err = blockchain.Transfer(username, receiverAccountID, convertedValue)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	currentTime := time.Now()
-	var trxLog models.Transactions
-	trxLog.Sender = username
-	trxLog.Receiver = input.Receiver
-	trxLog.Value = input.Value
-	trxLog.Date = fmt.Sprint(currentTime.Format("2006-01-02 15:04:05"))
-	trxLog.SaveTransaction()
+	var transactionLog models.Transactions
+	transactionLog.Sender = username
+	transactionLog.Receiver = input.Receiver
+	transactionLog.Value = input.Value
+	transactionLog.Date = fmt.Sprint(currentTime.Format("2006-01-02 15:04:05"))
+	transactionLog.SaveTransaction()
 
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
