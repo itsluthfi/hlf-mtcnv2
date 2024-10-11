@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GenerateToken(userId uint, email string, walletId string, isSuper bool) (string, error) {
+func GenerateToken(userId uint, email string, accountId string) (string, error) {
 	token_lifespan, err := strconv.Atoi(os.Getenv("TOKEN_HOUR_LIFESPAN"))
 	if err != nil {
 		return "", err
@@ -21,8 +21,7 @@ func GenerateToken(userId uint, email string, walletId string, isSuper bool) (st
 	claims["authorized"] = true
 	claims["user_id"] = userId
 	claims["email"] = email
-	claims["wallet_id"] = walletId
-	claims["is_super"] = isSuper
+	claims["account_id"] = accountId
 	claims["exp"] = time.Now().Add(time.Hour * time.Duration(token_lifespan)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
