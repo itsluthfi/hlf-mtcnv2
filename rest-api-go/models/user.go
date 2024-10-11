@@ -16,12 +16,10 @@ type User struct {
 	gorm.Model
 	Username  string `gorm:"size:225;not null;unique" json:"username"`
 	Password  string `gorm:"size:225;not null" json:"password"`
-	WalletID  string `gorm:"size:255" json:"walletId"`
+	AccountID string `gorm:"size:255" json:"accountId"`
 	Email     string `gorm:"size:225" json:"email"`
-	Firstname string `gorm:"size:225" json:"firstname"`
-	Lastname  string `gorm:"size:255" json:"lastname"`
-	IsActive  bool   `gorm:"size:255" json:"is_active"`
-	IsSuper   bool   `gorm:"size:255" json:"is_super"`
+	Name      string `gorm:"size:225" json:"name"`
+	Phone     string `gorm:"size:255" json:"phone"`
 }
 
 type Transactions struct {
@@ -59,14 +57,14 @@ func GetUsernameByID(uid uint) (string, error) {
 	return u.Username, nil
 }
 
-func GetWalletIDByUsername(username string) (string, error) {
+func GetAccountIDByUsername(username string) (string, error) {
 	var u User
 
 	if err := DB.Where("username = ?", username).First(&u).Error; err != nil {
 		return "", errors.New("user not found")
 	}
 
-	return u.WalletID, nil
+	return u.AccountID, nil
 }
 
 func VerifyPassword(password, hashedPassword string) error {
@@ -134,7 +132,7 @@ func LoginCheck(username string, password string) (string, error) {
 		return "", err
 	}
 
-	token, err := token.GenerateToken(u.ID, u.Email, u.WalletID, u.IsSuper)
+	token, err := token.GenerateToken(u.ID, u.Email, u.AccountID)
 	if err != nil {
 		return "", err
 	}
