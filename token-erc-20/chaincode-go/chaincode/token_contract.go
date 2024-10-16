@@ -131,28 +131,8 @@ func (s *SmartContract) Mint(ctx contractapi.TransactionContextInterface, amount
 	return nil
 }
 
-// Mint creates new tokens and adds them to minter's account balance with composite keys
-func (s *SmartContract) MintBatch(ctx contractapi.TransactionContextInterface, amount int) error {
-
-	// Check if contract is initialized
-	initialized, err := checkInitialized(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to check if contract is already initialized: %v", err)
-	}
-	if !initialized {
-		return fmt.Errorf("Contract options need to be set before calling any function, call Initialize() to initialize contract")
-	}
-
-	// Check minter authorization
-	clientMSPID, err := ctx.GetClientIdentity().GetMSPID()
-	if err != nil {
-		return fmt.Errorf("failed to get MSPID: %v", err)
-	}
-	if clientMSPID != "Org1MSP" {
-		return fmt.Errorf("client is not authorized to mint new tokens")
-	}
-
-	// Get the minter's ID
+func (s *SmartContract) MintTest(ctx contractapi.TransactionContextInterface, amount int) error {
+	// Get ID of submitting client identity
 	minter, err := ctx.GetClientIdentity().GetID()
 	if err != nil {
 		return fmt.Errorf("failed to get client id: %v", err)
@@ -162,30 +142,28 @@ func (s *SmartContract) MintBatch(ctx contractapi.TransactionContextInterface, a
 		return fmt.Errorf("mint amount must be a positive integer")
 	}
 
-	// Use composite key for each transaction to avoid state conflicts
-	mintKey, err := ctx.GetStub().CreateCompositeKey("mint", []string{minter, ctx.GetStub().GetTxID()})
+	// Create a composite key for this mint operation
+	txID := ctx.GetStub().GetTxID()
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("mint", []string{minter, txID})
 	if err != nil {
 		return fmt.Errorf("failed to create composite key: %v", err)
 	}
 
-	// Store the mint amount with the composite key
-	err = ctx.GetStub().PutState(mintKey, []byte(strconv.Itoa(amount)))
+	// Store the minted amount using the composite key
+	err = ctx.GetStub().PutState(compositeKey, []byte(strconv.Itoa(amount)))
 	if err != nil {
-		return fmt.Errorf("failed to update minter's balance: %v", err)
+		return fmt.Errorf("failed to put mint amount in world state: %v", err)
 	}
 
-	// Emit a Transfer event
-	transferEvent := event{"0x0", minter, amount}
-	transferEventJSON, err := json.Marshal(transferEvent)
+	// Update total supply (using a separate key to avoid conflicts)
+	totalSupplyKey, err := ctx.GetStub().CreateCompositeKey("totalSupply", []string{txID})
 	if err != nil {
-		return fmt.Errorf("failed to obtain JSON encoding: %v", err)
+		return fmt.Errorf("failed to create total supply key: %v", err)
 	}
-	err = ctx.GetStub().SetEvent("Transfer", transferEventJSON)
+	err = ctx.GetStub().PutState(totalSupplyKey, []byte(strconv.Itoa(amount)))
 	if err != nil {
-		return fmt.Errorf("failed to set event: %v", err)
+		return fmt.Errorf("failed to update total supply: %v", err)
 	}
-
-	log.Printf("Minted %d tokens for minter %s", amount, minter)
 
 	return nil
 }
@@ -319,6 +297,34 @@ func (s *SmartContract) Transfer(ctx contractapi.TransactionContextInterface, re
 	err = ctx.GetStub().SetEvent("Transfer", transferEventJSON)
 	if err != nil {
 		return fmt.Errorf("failed to set event: %v", err)
+	}
+
+	return nil
+}
+
+func (s *SmartContract) TransferTest(ctx contractapi.TransactionContextInterface, recipient string, amount int) error {
+	// Get ID of submitting client identity (from)
+	from, err := ctx.GetClientIdentity().GetID()
+	if err != nil {
+		return fmt.Errorf("failed to get client id: %v", err)
+	}
+
+	if amount <= 0 {
+		return fmt.Errorf("transfer amount must be a positive integer")
+	}
+
+	// Create a composite key for this transfer operation
+	txID := ctx.GetStub().GetTxID()
+	compositeKey, err := ctx.GetStub().CreateCompositeKey("transfer", []string{from, recipient, txID})
+	if err != nil {
+		return fmt.Errorf("failed to create composite key: %v", err)
+	}
+
+	// Store the transfer amount using the composite key
+	transferRecord := fmt.Sprintf("%s,%s,%d", from, recipient, amount)
+	err = ctx.GetStub().PutState(compositeKey, []byte(transferRecord))
+	if err != nil {
+		return fmt.Errorf("failed to record transfer in world state: %v", err)
 	}
 
 	return nil
